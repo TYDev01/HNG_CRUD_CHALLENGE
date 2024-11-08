@@ -7,27 +7,61 @@ import psycopg
 
 from dotenv import load_dotenv
 import os
+import bcrypt
+import time
+
 
 load_dotenv()
 
 app = FastAPI()
 
-db_host = os.environ.get("HOST")
-db_databse = os.environ.get("DATABASE")
-db_user = os.environ.get("USER")
-db_password = os.environ.get("PASSWORD")
-db_port = os.environ.get("PORT")
+db_host = os.getenv("HOST")
+db_databse = os.getenv("DATABASE")
+db_user = os.getenv("USER")
+db_password = os.getenv("PASSWORD")
+db_port = os.getenv("PORT")
+
 
 
 # Connectinng to the database
-try:
-    conn = psycopg.connect(dbname=db_databse, user=db_user, password=db_password,host=db_host, port=db_port)
-    cursor = conn.cursor()
-    print("Database connection, successful 🎉🎉🎉")
-except Exception as err:
-    print("Connecting to Database failed")
-    print("Error message is:", err)
+while True:
+    try:
+        conn = psycopg.connect(dbname=db_databse, user=db_user, password=db_password,host=db_host, port=db_port)
+        cursor = conn.cursor()
+            # SQL to create the users table
+        create_table_sql = """
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            username VARCHAR(50) UNIQUE NULL,
+            password VARCHAR(255) NOT NULL
+        );
+        """
+        create_task_sql = """
+        CREATE TABLE IF NOT EXISTS tasks (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            description VARCHAR(50) NOT NULL,
+            dueDate DATE,
+            status VARCHAR(255) NOT NULL,
+            createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """
 
+
+        # Execute the table creation
+        cursor.execute(create_table_sql)
+        cursor.execute(create_task_sql)
+        conn.commit()
+        print("Users Table created successfully 🎉🎉🎉")
+        print("Task Table created successfully 🎉🎉🎉")
+        print("Database connection, successful 🎉🎉🎉")
+        break
+    except Exception as err:
+        print("Connecting to Database failed")
+        print("Error message is:", err)
+        time.sleep(3)
 
 
 # User model
@@ -55,11 +89,24 @@ async def home_view():
 
 @app.post("/users/register/")
 async def register_view(new_user: RegisterUser):
-    print(new_user)
+    # Hashing the password
+    new_password = new_user.password
+    hashed_password = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt())
+
+    cursor.execute(""" INSERT INTO users (email, username, password) VALUES (%s,%s,%s) RETURNING * """, (new_user.email, new_user.username, hashed_password.decode("utf-8")))
+    registerd_users = cursor.fetchone()
+    conn.commit() # For your data to be showing in your database table you must commit it and not to be refrenced to cursor but to conn.
+    print(registerd_users)
     return {"response": "Registeration successfull"}
 
-
+# Creating a new task
 @app.post("/tasks")
 async def create_task(new_task: Tasks):
-    print(new_task)
+    cursor.execute(""" INSERT INTO tasks (title, description, dueDate, status, createdAt, updatedAt) VALUES (%s,%s,%s,%s,%s,%s) RETURNING * """, (new_task.title, new_task.description, new_task.dueDate, new_task.status, new_task.createdAt, new_task.updatedAt))
+    new_tasks = cursor.fetchone()
+    conn.commit()
+    print(new_tasks)
     return {"response": "new task created."}
+
+
+# Retrieve all tasks with pagination 
