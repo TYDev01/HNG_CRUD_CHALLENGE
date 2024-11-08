@@ -120,3 +120,16 @@ async def retrieve_all_tasks():
     print(all_tasks)
 
     return {"respons": all_tasks}
+
+
+# Retrieve a task by id 
+@app.get('/tasks/{id}', status_code=status.HTTP_200_OK)
+async def retrieve_all_tasks(id: int):
+    cursor.execute (""" SELECT * FROM tasks WHERE id=%s""", (id,))
+    a_task = cursor.fetchone()
+    if not a_task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with id {id} not found")
+    conn.commit()
+    print(a_task)
+
+    return {"respons": a_task}
