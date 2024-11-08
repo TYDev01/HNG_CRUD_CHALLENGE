@@ -3,9 +3,32 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from uuid import uuid4, UUID
 from datetime import datetime, timezone
+import psycopg
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = FastAPI()
+
+db_host = os.environ.get("HOST")
+db_databse = os.environ.get("DATABASE")
+db_user = os.environ.get("USER")
+db_password = os.environ.get("PASSWORD")
+db_port = os.environ.get("PORT")
+
+
+# Connectinng to the database
+try:
+    conn = psycopg.connect(dbname=db_databse, user=db_user, password=db_password,host=db_host, port=db_port)
+    cursor = conn.cursor()
+    print("Database connection, successful 🎉🎉🎉")
+except Exception as err:
+    print("Connecting to Database failed")
+    print("Error message is:", err)
+
+
 
 # User model
 class RegisterUser(BaseModel):
