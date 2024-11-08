@@ -74,6 +74,7 @@ class RegisterUser(BaseModel):
 
 # Task model
 class Tasks(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
     title: str
     description: str
     dueDate: datetime
@@ -106,7 +107,7 @@ async def create_task(new_task: Tasks):
     new_tasks = cursor.fetchone()
     conn.commit()
     print(new_tasks)
-    return {"response": new_tasks}
+    return {"data": new_tasks}
 
 
 # Retrieve all tasks with pagination 
@@ -119,7 +120,7 @@ async def retrieve_all_tasks():
     conn.commit()
     print(all_tasks)
 
-    return {"respons": all_tasks}
+    return {"data": all_tasks}
 
 
 # Retrieve a task by id 
@@ -128,8 +129,20 @@ async def retrieve_all_tasks(id: int):
     cursor.execute (""" SELECT * FROM tasks WHERE id=%s""", (id,))
     a_task = cursor.fetchone()
     if not a_task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with id {id} not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with id '{id}' not found")
     conn.commit()
     print(a_task)
 
     return {"respons": a_task}
+
+
+# Deleting a Task
+@app.delete('/tasks/{id}', status_code=status.HTTP_200_OK)
+def delete_post(id: int):
+    cursor.execute(""" DELETE FROM tasks WHERE id=%s returning * """, (id,))
+    d_task = cursor.fetchone()
+    conn.commit()
+    if d_task == None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Task with iD of '{id}' not found")
+    
+    return{"data", d_task}
