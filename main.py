@@ -138,11 +138,24 @@ async def retrieve_all_tasks(id: int):
 
 # Deleting a Task
 @app.delete('/tasks/{id}', status_code=status.HTTP_200_OK)
-def delete_post(id: int):
+async def delete_post(id: int):
     cursor.execute(""" DELETE FROM tasks WHERE id=%s returning * """, (id,))
     d_task = cursor.fetchone()
     conn.commit()
     if d_task == None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Task with iD of '{id}' not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with iD of '{id}' not found")
     
     return{"data", d_task}
+
+
+# Updating a Task
+@app.put('/tasks/{id}', status_code=status.HTTP_200_OK)
+async def update_task(id: int, new_task: Tasks):
+    cursor.execute(""" UPDATE tasks SET title = %s, description = %s, dueDate = %s, status = %s, createdAt = %s, updatedAt = %s WHERE id = %s RETURNING * """,( new_task.title, new_task.description, new_task.dueDate, new_task.status, new_task.createdAt, new_task.updatedAt, id))
+    updated_task = cursor.fetchone()
+    conn.commit()
+
+    if updated_task == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with iD of '{id}' not found")
+    
+    return{"data": updated_task}
