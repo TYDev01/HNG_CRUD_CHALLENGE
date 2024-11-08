@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from uuid import uuid4, UUID
@@ -100,13 +100,23 @@ async def register_view(new_user: RegisterUser):
     return {"response": "Registeration successfull"}
 
 # Creating a new task
-@app.post("/tasks")
+@app.post("/tasks", status_code=status.HTTP_201_CREATED)
 async def create_task(new_task: Tasks):
     cursor.execute(""" INSERT INTO tasks (title, description, dueDate, status, createdAt, updatedAt) VALUES (%s,%s,%s,%s,%s,%s) RETURNING * """, (new_task.title, new_task.description, new_task.dueDate, new_task.status, new_task.createdAt, new_task.updatedAt))
     new_tasks = cursor.fetchone()
     conn.commit()
     print(new_tasks)
-    return {"response": "new task created."}
+    return {"response": new_tasks}
 
 
 # Retrieve all tasks with pagination 
+@app.get('/tasks', status_code=status.HTTP_200_OK)
+async def retrieve_all_tasks():
+    cursor.execute (""" SELECT * FROM tasks""")
+    all_tasks = cursor.fetchall()
+    if not all_tasks:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No task found")
+    conn.commit()
+    print(all_tasks)
+
+    return {"respons": all_tasks}
