@@ -100,6 +100,13 @@ async def register_view(new_user: RegisterUser):
     print(registerd_users)
     return {"response": "Registeration successfull"}
 
+# Login a user
+@app.post("/users/login/")
+async def login_user():
+    cursor.execute("""
+    SELECT * FROM users
+""")
+
 # Creating a new task
 @app.post("/tasks", status_code=status.HTTP_201_CREATED)
 async def create_task(new_task: Tasks):
@@ -121,6 +128,8 @@ async def retrieve_all_tasks():
     print(all_tasks)
 
     return {"data": all_tasks}
+
+
 
 
 # Retrieve a task by id 
@@ -159,3 +168,5 @@ async def update_task(id: int, new_task: Tasks):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with iD of '{id}' not found")
     
     return{"data": updated_task}
+
+
