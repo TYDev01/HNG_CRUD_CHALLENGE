@@ -4,7 +4,7 @@ import bcrypt
 # from sqlalchemy.orm import Session
 from .models import RegisterUser, Tasks
 from .database import get_db, init_db
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 init_db()
 load_dotenv()
@@ -58,16 +58,16 @@ async def create_task(new_task: Tasks, db: Session = Depends(get_db)):
 
 
 # # Retrieve all tasks with pagination 
-# @app.get('/tasks', status_code=status.HTTP_200_OK)
-# async def retrieve_all_tasks():
-#     cursor.execute (""" SELECT * FROM tasks""")
-#     all_tasks = cursor.fetchall()
-#     if not all_tasks:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No task found")
-#     conn.commit()
-#     print(all_tasks)
+@app.get('/tasks', status_code=status.HTTP_200_OK)
+async def retrieve_all_tasks(page: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    query = select(Tasks).offset(page).limit(limit)
+    all_tasks = db.exec(query)
+    tasks = all_tasks.fetchall()
+    if not tasks:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No task found")
+    print(tasks)
 
-#     return {"data": all_tasks}
+    return {"data": tasks}
 
 
 
