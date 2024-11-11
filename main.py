@@ -72,17 +72,15 @@ async def retrieve_all_tasks(page: int = 0, limit: int = 10, db: Session = Depen
 
 
 
-# # Retrieve a task by id 
-# @app.get('/tasks/{id}', status_code=status.HTTP_200_OK)
-# async def retrieve_all_tasks(id: int):
-#     cursor.execute (""" SELECT * FROM tasks WHERE id=%s""", (id,))
-#     a_task = cursor.fetchone()
-#     if not a_task:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with id '{id}' not found")
-#     conn.commit()
-#     print(a_task)
+# Retrieve a task by id 
+@app.get('/tasks/{id}', status_code=status.HTTP_200_OK)
+async def retrieve_all_tasks(id: int, db: Session = Depends(get_db)):
+    task = db.get(Tasks, id)
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with id '{id}' not found")
+    print(task)
 
-#     return {"respons": a_task}
+    return {"respons": task}
 
 
 # # Deleting a Task
