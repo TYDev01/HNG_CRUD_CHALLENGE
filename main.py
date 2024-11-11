@@ -83,16 +83,16 @@ async def retrieve_all_tasks(id: int, db: Session = Depends(get_db)):
     return {"respons": task}
 
 
-# # Deleting a Task
-# @app.delete('/tasks/{id}', status_code=status.HTTP_200_OK)
-# async def delete_post(id: int):
-#     cursor.execute(""" DELETE FROM tasks WHERE id=%s returning * """, (id,))
-#     d_task = cursor.fetchone()
-#     conn.commit()
-#     if d_task == None:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with iD of '{id}' not found")
+# Deleting a Task
+@app.delete('/tasks/{id}', status_code=status.HTTP_200_OK)
+async def delete_post(id: int, db: Session = Depends(get_db)):
+    get_task_first = db.get(Tasks, id)
+    if get_task_first == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with iD of '{id}' not found")
+    d_task = db.delete(get_task_first)
+    db.commit()
     
-#     return{"data", d_task}
+    return{ "Deleted Successfully"}
 
 
 # # Updating a Task
