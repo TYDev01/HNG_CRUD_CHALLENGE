@@ -5,6 +5,7 @@ import bcrypt
 from .models import RegisterUser, Tasks
 from .database import get_db, init_db
 from sqlmodel import Session, select
+from datetime import datetime
 
 init_db()
 load_dotenv()
@@ -95,18 +96,23 @@ async def delete_post(id: int, db: Session = Depends(get_db)):
     return{ "Deleted Successfully"}
 
 
-# # Updating a Task
-# @app.put('/tasks/{id}', status_code=status.HTTP_200_OK)
-# async def update_task(id: int, new_task: Tasks):
-#     cursor.execute(""" UPDATE tasks SET title = %s, description = %s, dueDate = %s, status = %s, createdAt = %s, updatedAt = %s WHERE id = %s RETURNING * """,( new_task.title, new_task.description, new_task.dueDate, new_task.status, new_task.createdAt, new_task.updatedAt, id))
-#     updated_task = cursor.fetchone()
-#     conn.commit()
+# Updating a Task
+@app.put('/tasks/{id}', status_code=status.HTTP_200_OK)
+async def update_task(id: int, unew_task: Tasks, db: Session = Depends(get_db)):
+    task_to_be_updated = db.get(Tasks, id)
+    print(task_to_be_updated)
+    if task_to_be_updated == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with iD of '{id}' not found")
+    task_to_be_updated.title = unew_task.title
+    task_to_be_updated.description = unew_task.description
+    task_to_be_updated.dueDate = unew_task.dueDate
+    task_to_be_updated.status = unew_task.status
+    task_to_be_updated.updatedAt = datetime.now()
 
-#     if updated_task == None:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task with iD of '{id}' not found")
+    db.add(task_to_be_updated)
+    db.commit()
+    db.refresh(task_to_be_updated)
     
-#     return{"data": updated_task}
+    return{"data": task_to_be_updated}
 
 
-if __name__ == "__main__":
-    init_db()
